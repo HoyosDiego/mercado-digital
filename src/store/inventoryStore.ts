@@ -42,7 +42,8 @@ export const LOCATIONS = {
 type ViewType =
   | "dashboard"
   | "digitizer"
-  | "catalog";
+  | "catalog"
+  | "publication_detail";
 
 type CategoryFilter =
   | "all"
@@ -73,8 +74,14 @@ interface InventoryStoreState {
   isPublishing: boolean;
   flowError: string | null;
 
+  selectedItem: PublicationItem | null;
+
   setView: (
     view: ViewType
+  ) => void;
+
+  setSelectedItem: (
+    item: PublicationItem | null
   ) => void;
 
   fetchItems: () => Promise<void>;
@@ -106,6 +113,11 @@ interface InventoryStoreState {
     finalData: Record<string, unknown>
   ) => Promise<void>;
 
+  publishExistingDraft: (
+    publicationId: string,
+    finalData: Record<string, unknown>
+  ) => Promise<void>;
+
   resetFlow: () => void;
 }
 
@@ -120,11 +132,11 @@ const isToday = (
 
   return (
     date.getDate() ===
-      now.getDate() &&
+    now.getDate() &&
     date.getMonth() ===
-      now.getMonth() &&
+    now.getMonth() &&
     date.getFullYear() ===
-      now.getFullYear()
+    now.getFullYear()
   );
 };
 
@@ -169,12 +181,19 @@ export const useInventoryStore =
       isPublishing: false,
       flowError: null,
 
+      selectedItem: null,
+
       setView: (
         view
       ) =>
         set({
           currentView:
             view,
+        }),
+
+      setSelectedItem: (item) =>
+        set({
+          selectedItem: item,
         }),
 
       setFilterCategory:
@@ -217,7 +236,7 @@ export const useInventoryStore =
               isLoadingItems: false,
             });
           } catch (
-            error: any
+          error: any
           ) {
             set({
               isLoadingItems: false,
@@ -259,9 +278,9 @@ export const useInventoryStore =
 
               const byCategory =
                 filterCategory ===
-                  "all" ||
+                "all" ||
                 item.status ===
-                  filterCategory;
+                filterCategory;
 
               let byDate =
                 true;
@@ -332,7 +351,7 @@ export const useInventoryStore =
               isAnalyzing: false,
             });
           } catch (
-            error: any
+          error: any
           ) {
             set({
               isAnalyzing: false,
@@ -378,7 +397,7 @@ export const useInventoryStore =
               isAnalyzing: false,
             });
           } catch (
-            error: any
+          error: any
           ) {
             set({
               isAnalyzing: false,
@@ -421,8 +440,38 @@ export const useInventoryStore =
               draftData: null,
               isPublishing: false,
             });
+          } finally {
+            set({
+              isPublishing: false,
+            });
+          }
+        },
+
+      publishExistingDraft:
+        async (
+          publicationId,
+          finalData
+        ) => {
+          try {
+            set({
+              isPublishing: true,
+              flowError: null,
+            });
+
+            await inventoryService.publishPublication(
+              publicationId,
+              finalData
+            );
+
+            await get().fetchItems();
+
+            set({
+              selectedItem: null,
+              isPublishing: false,
+              currentView: "catalog",
+            });
           } catch (
-            error: any
+          error: any
           ) {
             set({
               isPublishing: false,

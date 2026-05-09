@@ -2,7 +2,7 @@
 // Flujo: Cargar imagen → Analizar con Gemini → Validar datos → Publicar
 // Diseñado para usuarios con baja alfabetización digital
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useInventoryStore, CATEGORIES, LOCATIONS } from "../store/inventoryStore";
 import { useAuthStore } from "../store/authStore";
 
@@ -84,11 +84,10 @@ function ImageUploadZone({ onImageSelected, preview, isAnalyzing }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
-      className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
-        isDragging
-          ? "border-emerald-500 bg-emerald-50"
-          : "border-stone-300 bg-stone-50 hover:border-emerald-400 hover:bg-emerald-50/50"
-      }`}
+      className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${isDragging
+        ? "border-emerald-500 bg-emerald-50"
+        : "border-stone-300 bg-stone-50 hover:border-emerald-400 hover:bg-emerald-50/50"
+        }`}
     >
       <div className="text-5xl mb-3">📸</div>
       <p className="font-semibold text-stone-700 text-base">
@@ -112,203 +111,22 @@ function ImageUploadZone({ onImageSelected, preview, isAnalyzing }) {
   );
 }
 
-// ─── Paso 2: Formulario de validación de datos sugeridos por IA ───────────────
-function ValidationForm({ initialData, onSubmit, onCancel, isSubmitting }) {
-  // Pre-cargar el formulario con los datos que sugirió Gemini
-  const [form, setForm] = useState({
-    nombre: initialData?.nombre || "",
-    precio: initialData?.precio?.toString() || "",
-    categoria: initialData?.categoria || CATEGORIES.PRODUCTO,
-    descripcion: initialData?.descripcion || "",
-    ubicacion: LOCATIONS.CALI,
-  });
-
-  const [errors, setErrors] = useState({});
-
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    // Limpiar error del campo al corregirlo
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  // Validar antes de enviar
-  const validate = () => {
-    const newErrors = {};
-    if (!form.nombre.trim()) {
-      newErrors.nombre = "El nombre es obligatorio";
-    }
-    if (!form.precio || isNaN(Number(form.precio)) || Number(form.precio) < 0) {
-      newErrors.precio = "Ingresa un precio válido";
-    }
-    if (!form.descripcion.trim()) {
-      newErrors.descripcion = "La descripción es obligatoria";
-    }
-    return newErrors;
-  };
-
-  const handleSubmit = () => {
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    onSubmit({
-      ...form,
-      precio: Number(form.precio),
-    });
-  };
-
-  return (
-    <div className="space-y-4">
-      {/* Aviso: datos sugeridos por IA */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-start gap-2">
-        <span className="text-lg">✨</span>
-        <p className="text-emerald-800 text-sm">
-          La IA completó los datos. Revisa y corrige si es necesario antes de publicar.
-        </p>
-      </div>
-
-      {/* Campo: Nombre del producto */}
-      <div>
-        <label className="block text-sm font-medium text-stone-700 mb-1.5">
-          Nombre del producto o servicio
-        </label>
-        <input
-          type="text"
-          value={form.nombre}
-          onChange={(e) => handleChange("nombre", e.target.value)}
-          maxLength={60}
-          className={`w-full px-4 py-3 rounded-xl border text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base ${
-            errors.nombre ? "border-red-300 bg-red-50" : "border-stone-200"
-          }`}
-        />
-        {errors.nombre && (
-          <p className="text-red-500 text-xs mt-1">{errors.nombre}</p>
-        )}
-      </div>
-
-      {/* Campos: Precio y Categoría en fila */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1.5">
-            Precio (COP $)
-          </label>
-          <input
-            type="number"
-            value={form.precio}
-            onChange={(e) => handleChange("precio", e.target.value)}
-            placeholder="0"
-            min="0"
-            className={`w-full px-4 py-3 rounded-xl border text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base ${
-              errors.precio ? "border-red-300 bg-red-50" : "border-stone-200"
-            }`}
-          />
-          {errors.precio && (
-            <p className="text-red-500 text-xs mt-1">{errors.precio}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1.5">
-            Tipo
-          </label>
-          <select
-            value={form.categoria}
-            onChange={(e) => handleChange("categoria", e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-stone-200 text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white"
-          >
-            <option value={CATEGORIES.PRODUCTO}>Producto</option>
-            <option value={CATEGORIES.SERVICIO}>Servicio</option>
-            <option value={CATEGORIES.ARRIENDO}>Arriendo</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Campo: Descripción */}
-      <div>
-        <label className="block text-sm font-medium text-stone-700 mb-1.5">
-          Descripción
-        </label>
-        <textarea
-          value={form.descripcion}
-          onChange={(e) => handleChange("descripcion", e.target.value)}
-          rows={3}
-          maxLength={150}
-          placeholder="¿Qué ofreces? ¿Qué lo hace especial?"
-          className={`w-full px-4 py-3 rounded-xl border text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base resize-none ${
-            errors.descripcion ? "border-red-300 bg-red-50" : "border-stone-200"
-          }`}
-        />
-        <p className="text-stone-400 text-xs mt-1 text-right">
-          {form.descripcion.length}/150
-        </p>
-        {errors.descripcion && (
-          <p className="text-red-500 text-xs mt-1">{errors.descripcion}</p>
-        )}
-      </div>
-
-      {/* Campo: Ubicación */}
-      <div>
-        <label className="block text-sm font-medium text-stone-700 mb-1.5">
-          ¿Dónde está tu negocio?
-        </label>
-        <div className="flex gap-2">
-          {Object.values(LOCATIONS).map((loc) => (
-            <button
-              key={loc}
-              onClick={() => handleChange("ubicacion", loc)}
-              className={`flex-1 py-3 rounded-xl border font-medium text-sm transition-all ${
-                form.ubicacion === loc
-                  ? "bg-emerald-600 border-emerald-600 text-white"
-                  : "border-stone-200 text-stone-600 hover:border-emerald-300"
-              }`}
-            >
-              {loc}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Botones de acción */}
-      <div className="flex gap-3 pt-2">
-        <button
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="flex-1 py-3.5 rounded-xl border border-stone-200 text-stone-600 font-medium hover:bg-stone-50 transition-colors"
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-semibold transition-colors"
-        >
-          {isSubmitting ? "Publicando..." : "Publicar ahora"}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ─── Pantalla de éxito ────────────────────────────────────────────────────────
-function SuccessScreen({ itemName, onNew, onDashboard }) {
+function SuccessScreen({ onNew, onDashboard }) {
   return (
     <div className="text-center py-10">
-      <div className="text-6xl mb-4">🎉</div>
-      <h3 className="text-xl font-bold text-stone-800">¡Listo!</h3>
+      <div className="text-6xl mb-4">✨</div>
+      <h3 className="text-xl font-bold text-stone-800">¡Analizado exitosamente!</h3>
       <p className="text-stone-500 mt-2">
-        <span className="font-medium text-stone-700">"{itemName}"</span>{" "}
-        ya está en tu catálogo digital.
+        La IA ha procesado tu producto y lo ha guardado como borrador.
       </p>
       <div className="flex gap-3 mt-6">
         <button
           onClick={onNew}
           className="flex-1 py-3 rounded-xl border border-emerald-600 text-emerald-600 font-medium hover:bg-emerald-50"
         >
-          Agregar otro
+          Analizar otro
         </button>
         <button
           onClick={onDashboard}
@@ -325,15 +143,12 @@ function SuccessScreen({ itemName, onNew, onDashboard }) {
 export default function DigitizerView() {
   const { user } = useAuthStore();
   const {
-    digitizerImage,
-    digitizerPreview,
-    aiSuggestedData,
+    draftData,
     isAnalyzing,
-    analyzeError,
-    setDigitizerImage,
-    analyzeImageWithAI,
-    resetDigitizer,
-    addItem,
+    flowError,
+    startPublication,
+    resetFlow,
+    publishFinal,
     setView,
   } = useInventoryStore();
 
@@ -341,33 +156,30 @@ export default function DigitizerView() {
   const [step, setStep] = useState("upload");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publishedItemName, setPublishedItemName] = useState("");
+  const [intent, setIntent] = useState("Quiero publicar esto");
+  const [preview, setPreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // ── Paso 1: Usuario selecciona imagen ───────────────────────────────────────
-  const handleImageSelected = async (file) => {
-    setDigitizerImage(file);
-    // Automáticamente lanzar análisis de IA
-    const result = await analyzeImageWithAI(file);
-    if (result.success) {
-      setStep("validate");
-    }
-    // Si falla, el error se muestra desde el store
+  const handleImageSelected = (file) => {
+    setSelectedFile(file);
+    setPreview(URL.createObjectURL(file));
   };
 
-  // ── Paso 2: Usuario confirma y publica ──────────────────────────────────────
-  const handlePublish = async (formData) => {
-    setIsSubmitting(true);
-    const result = await addItem(user.uid, formData);
-    setIsSubmitting(false);
-
-    if (result.success) {
-      setPublishedItemName(formData.nombre);
-      setStep("success");
-    }
+  const handleAnalyze = async () => {
+    if (!selectedFile) return;
+    await startPublication(selectedFile, intent);
+    setPublishedItemName(intent || "Producto");
+    setStep("success");
   };
+
+  // El useEffect que cambiaba a validate ya no es necesario
+
 
   // ── Resetear para agregar otro ──────────────────────────────────────────────
   const handleNewItem = () => {
-    resetDigitizer();
+    resetFlow();
+    setPreview(null);
     setStep("upload");
   };
 
@@ -384,53 +196,60 @@ export default function DigitizerView() {
       {/* ── Indicador de pasos ────────────────────────────────────────── */}
       {step !== "success" && (
         <div className="flex items-center gap-2">
-          {["upload", "validate"].map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              <div
-                className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${
-                  step === s
-                    ? "bg-emerald-600 text-white"
-                    : i < ["upload", "validate"].indexOf(step)
-                    ? "bg-emerald-200 text-emerald-700"
-                    : "bg-stone-200 text-stone-400"
-                }`}
-              >
-                {i + 1}
-              </div>
-              <span
-                className={`text-xs ${
-                  step === s ? "text-stone-700 font-medium" : "text-stone-400"
-                }`}
-              >
-                {s === "upload" ? "Foto" : "Verificar"}
-              </span>
-              {i < 1 && <div className="flex-1 h-px bg-stone-200 w-4" />}
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">
+              1
             </div>
-          ))}
+            <span className="text-xs text-stone-700 font-medium">
+              Digitalizar
+            </span>
+          </div>
         </div>
       )}
 
       {/* ── Contenido por paso ────────────────────────────────────────── */}
       {step === "upload" && (
         <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
+            <label className="block text-sm font-semibold text-stone-700">
+              ¿Qué quieres publicar? (Opcional)
+            </label>
+            <textarea
+              value={intent}
+              onChange={(e) => setIntent(e.target.value)}
+              placeholder="Ej: Quiero publicar estos zapatos rojos usados en buen estado..."
+              rows={2}
+              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm resize-none"
+            />
+            <p className="text-[10px] text-stone-400">
+              Describe brevemente tu producto para que la IA sea más precisa.
+            </p>
+          </div>
+
           <ImageUploadZone
             onImageSelected={handleImageSelected}
-            preview={digitizerPreview}
+            preview={preview}
             isAnalyzing={isAnalyzing}
           />
 
+          {preview && !isAnalyzing && (
+            <button
+              onClick={handleAnalyze}
+              className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-lg shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              ✨ Analizar con IA
+            </button>
+          )}
+
           {/* Error de análisis */}
-          {analyzeError && (
+          {flowError && (
             <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-              <p className="text-red-600 text-sm">⚠️ {analyzeError}</p>
-              <p className="text-red-500 text-xs mt-1">
-                Prueba con una foto más clara o con mejor luz.
-              </p>
+              <p className="text-red-600 text-sm">⚠️ {flowError}</p>
             </div>
           )}
 
           {/* Instrucciones de uso */}
-          {!digitizerPreview && (
+          {!preview && (
             <div className="bg-stone-100 rounded-2xl p-4 space-y-2">
               <p className="text-sm font-medium text-stone-700">
                 💡 Consejos para mejores resultados:
@@ -452,21 +271,11 @@ export default function DigitizerView() {
         </div>
       )}
 
-      {step === "validate" && (
-        <ValidationForm
-          initialData={aiSuggestedData}
-          onSubmit={handlePublish}
-          onCancel={handleNewItem}
-          isSubmitting={isSubmitting}
-        />
-      )}
-
       {step === "success" && (
         <SuccessScreen
-          itemName={publishedItemName}
           onNew={handleNewItem}
           onDashboard={() => {
-            resetDigitizer();
+            resetFlow();
             setView("dashboard");
           }}
         />

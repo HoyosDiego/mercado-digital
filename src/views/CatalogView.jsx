@@ -17,11 +17,10 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-        active
-          ? "bg-emerald-600 text-white shadow-sm"
-          : "bg-white text-stone-600 border border-stone-200 hover:border-emerald-300"
-      }`}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${active
+        ? "bg-emerald-600 text-white shadow-sm"
+        : "bg-white text-stone-600 border border-stone-200 hover:border-emerald-300"
+        }`}
     >
       {icon && <span>{icon}</span>}
       {label}
@@ -33,7 +32,9 @@ function FilterChip({
 // CARD PUBLICATION
 // ─────────────────────────────────────────────
 function PublicationCard({ item }) {
-  const badgeColors = {
+  const { setView, setSelectedItem } = useInventoryStore();
+
+  const statusColors = {
     DRAFT: "bg-amber-100 text-amber-700",
     PUBLISHED:
       "bg-emerald-100 text-emerald-700",
@@ -41,7 +42,13 @@ function PublicationCard({ item }) {
   };
 
   return (
-    <div className="bg-white border border-stone-100 rounded-2xl p-3 shadow-sm">
+    <div
+      onClick={() => {
+        setSelectedItem(item);
+        setView("publication_detail");
+      }}
+      className="bg-white border border-stone-100 rounded-2xl p-3 shadow-sm cursor-pointer hover:border-emerald-200 transition-all active:scale-[0.98]"
+    >
       <div className="flex gap-3">
         <img
           src={
@@ -59,10 +66,9 @@ function PublicationCard({ item }) {
             </h4>
 
             <span
-              className={`text-xs px-2 py-1 rounded-full font-medium ${
-                badgeColors[item.status] ||
+              className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[item.status] ||
                 "bg-stone-100 text-stone-700"
-              }`}
+                }`}
             >
               {item.status}
             </span>

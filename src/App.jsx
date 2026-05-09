@@ -7,6 +7,7 @@ import LoginView from "./views/LoginView";
 import DashboardView from "./views/DashboardView";
 import DigitizerView from "./views/DigitizerView";
 import CatalogView from "./views/CatalogView";
+import PublicationDetailView from "./views/PublicationDetailView";
 import Navbar from "./components/layout/Navbar";
 import LoadingScreen from "./components/ui/LoadingScreen";
 
@@ -42,6 +43,7 @@ export default function App() {
       case "dashboard": return <DashboardView />;
       case "digitizer": return <DigitizerView />;
       case "catalog": return <CatalogView />;
+      case "publication_detail": return <PublicationDetailView />;
       default: return <DashboardView />;
     }
   };

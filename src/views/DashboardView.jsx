@@ -31,6 +31,8 @@ function StatCard({ label, value, icon, color }) {
 // CARD PUBLICACIÓN
 // ─────────────────────────────────────────────
 function PublicationCard({ item }) {
+  const { setView, setSelectedItem } = useInventoryStore();
+
   const statusColors = {
     DRAFT: "bg-amber-100 text-amber-700",
     PUBLISHED: "bg-emerald-100 text-emerald-700",
@@ -42,7 +44,13 @@ function PublicationCard({ item }) {
     "https://via.placeholder.com/100x100?text=IMG";
 
   return (
-    <div className="bg-white border border-stone-100 rounded-2xl p-3 shadow-sm">
+    <div 
+      onClick={() => {
+        setSelectedItem(item);
+        setView("publication_detail");
+      }}
+      className="bg-white border border-stone-100 rounded-2xl p-3 shadow-sm cursor-pointer hover:border-emerald-200 transition-all active:scale-[0.98]"
+    >
       <div className="flex gap-3">
         <img
           src={image}
