@@ -61,15 +61,16 @@ function ImageUploadZone({ onImageSelected, preview, isAnalyzing }) {
         {!isAnalyzing && (
           <button
             onClick={() => inputRef.current?.click()}
-            className="absolute top-3 right-3 bg-white/90 text-stone-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-white"
+            className="absolute top-3 right-3 bg-white/90 text-stone-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-white shadow-sm"
           >
-            Cambiar foto
+            📸 Cambiar foto
           </button>
         )}
         <input
           ref={inputRef}
           type="file"
           accept="image/*"
+          capture="environment"
           className="hidden"
           onChange={handleFileChange}
         />
@@ -84,26 +85,26 @@ function ImageUploadZone({ onImageSelected, preview, isAnalyzing }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
-      className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${isDragging
+      className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${isDragging
         ? "border-emerald-500 bg-emerald-50"
         : "border-stone-300 bg-stone-50 hover:border-emerald-400 hover:bg-emerald-50/50"
         }`}
     >
-      <div className="text-5xl mb-3">📸</div>
-      <p className="font-semibold text-stone-700 text-base">
-        Sube la foto de tu producto
+      <div className="text-6xl mb-4">📸</div>
+      <p className="font-bold text-stone-800 text-lg">
+        Toma una foto o sube un archivo
       </p>
-      <p className="text-stone-400 text-sm mt-1">
-        Toca aquí o arrastra la imagen
+      <p className="text-stone-500 text-sm mt-2 max-w-[240px] mx-auto">
+        Puedes arrastrar la imagen aquí, usar tu cámara o buscar en tu PC.
       </p>
-      <div className="mt-4 inline-block bg-emerald-600 text-white text-sm font-medium px-5 py-2.5 rounded-xl">
-        Elegir foto
+      <div className="mt-6 inline-flex items-center gap-2 bg-emerald-600 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-emerald-700 transition-colors">
+        <span>📁 Elegir imagen</span>
       </div>
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"  // En móvil, abrir cámara trasera
+        capture="environment"  // En móvil, sugiere abrir la cámara
         className="hidden"
         onChange={handleFileChange}
       />
