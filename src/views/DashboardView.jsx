@@ -8,21 +8,37 @@ import { useInventoryStore } from "../store/inventoryStore";
 // ─────────────────────────────────────────────
 // CARD ESTADÍSTICA
 // ─────────────────────────────────────────────
-function StatCard({ label, value, icon, color }) {
+function StatCard({ label, value, icon, color, data }) {
+  if (data) {
+    return (
+      <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm transition-all hover:shadow-md flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-2xl">{icon}</span>
+            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${color}`}>
+              IA
+            </span>
+          </div>
+          <p className="text-sm font-black text-stone-800 line-clamp-2 leading-tight">{data.titulo}</p>
+          <p className="text-lg font-black text-emerald-600 mt-1">
+            {typeof data.precio === 'number' ? `$${data.precio.toLocaleString()}` : data.precio}
+          </p>
+        </div>
+        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter mt-3">{label}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm">
+    <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-center justify-between mb-3">
         <span className="text-2xl">{icon}</span>
-
-        <span
-          className={`text-xs font-medium px-2 py-0.5 rounded-full ${color}`}
-        >
+        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${color}`}>
           hoy
         </span>
       </div>
-
-      <p className="text-3xl font-bold text-stone-800">{value}</p>
-      <p className="text-sm text-stone-500 mt-1">{label}</p>
+      <p className="text-3xl font-black text-stone-800">{value}</p>
+      <p className="text-xs font-bold text-stone-400 uppercase tracking-tighter mt-1">{label}</p>
     </div>
   );
 }

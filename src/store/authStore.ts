@@ -20,15 +20,14 @@ export const useAuthStore = create((set) => ({
   register: async (email: string, password: string, displayName: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Aquí llamarías a tu endpoint de registro si existiera, 
-      // o podrías simular el éxito para desarrollo:
-      console.log("Registrando usuario:", { email, displayName });
-
-      // Simulación de respuesta exitosa
-      const mockUser = { uid: "new-user", email, displayName };
-      set({ user: mockUser, isLoading: false });
-    } catch (err) {
-      set({ error: "Error al crear la cuenta", isLoading: false });
+      const data = await authService.register(email, password);
+      if (data.idToken) {
+        localStorage.setItem("mercadoDigitalToken", data.idToken);
+        const user = await authService.getUserProfile();
+        set({ user, isLoading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message || "Error al crear la cuenta", isLoading: false });
     }
   },
 
@@ -36,10 +35,14 @@ export const useAuthStore = create((set) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Lógica de login...
-      set({ isLoading: false });
-    } catch (err) {
-      set({ error: "Credenciales incorrectas", isLoading: false });
+      const data = await authService.login(email, password);
+      if (data.idToken) {
+        localStorage.setItem("mercadoDigitalToken", data.idToken);
+        const user = await authService.getUserProfile();
+        set({ user, isLoading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message || "Credenciales incorrectas", isLoading: false });
     }
   },
 

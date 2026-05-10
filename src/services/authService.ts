@@ -28,14 +28,16 @@ export interface AuthService {
   signOut: () => Promise<void>;
 
   getUserProfile: () => Promise<UserProfile | null>;
+  register: (email: string, password: string) => Promise<any>;
+  login: (email: string, password: string) => Promise<any>;
 }
 
 // ─────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────
 
-export const TOKEN_KEY =
-  "mercadoDigitalToken";
+const AUTH_URL = "https://us-central1-publixia-5a733.cloudfunctions.net/api/api/auth";
+export const TOKEN_KEY = "mercadoDigitalToken";
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -200,10 +202,29 @@ export const authService: AuthService = {
     },
 
   signOut: async (): Promise<void> => {
-    localStorage.removeItem(
-      TOKEN_KEY
-    );
-
+    localStorage.removeItem(TOKEN_KEY);
     window.location.reload();
+  },
+
+  register: async (email, password) => {
+    const response = await fetch(`${AUTH_URL}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Error en registro");
+    return data;
+  },
+
+  login: async (email, password) => {
+    const response = await fetch(`${AUTH_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Error en login");
+    return data;
   },
 };

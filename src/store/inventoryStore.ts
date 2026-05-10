@@ -322,91 +322,58 @@ export const useInventoryStore =
       // ─────────────────────
       // IA FLOW
       // ─────────────────────
-      startPublication:
-        async (
-          file,
-          intent
-        ) => {
-          try {
-            set({
-              isAnalyzing: true,
-              flowError: null,
-            });
+      startPublication: async (file, intent = "Quiero publicar esto") => {
+        try {
+          set({ isAnalyzing: true, flowError: null });
 
-            const data =
-              await inventoryService.initPublication(
-                file,
-                intent
-              );
-
-            set({
-              publicationId:
-                data.publicationId,
-              questions:
-                data.questions ||
-                [],
-              draftData:
-                data.draftData ||
-                null,
-              isAnalyzing: false,
-            });
-          } catch (
-          error: any
-          ) {
-            set({
-              isAnalyzing: false,
-              flowError:
-                error.message ||
-                "Error analizando imagen",
-            });
+          // PASO 1: Iniciar (Subir foto e intent)
+          const initData: any = await inventoryService.initPublication(file, intent);
+          
+          set({
+            publicationId: initData.publicationId,
+            questions: initData.analysis?.questions || [],
+            draftData: initData.analysis || null,
+            isAnalyzing: false,
+          });
+        } catch (error: any) {
+          let friendlyMessage = "Error analizando imagen";
+          const errorStr = String(error.message || "");
+          if (errorStr.includes("429") || errorStr.includes("quota")) {
+            friendlyMessage = "La IA está muy ocupada. Intenta de nuevo en unos segundos.";
           }
-        },
+          set({
+            isAnalyzing: false,
+            flowError: friendlyMessage,
+          });
+        }
+      },
 
-      answerQuestions:
-        async (
-          answers
-        ) => {
-          const {
-            publicationId,
-          } = get();
+      answerQuestions: async (answers) => {
+        const { publicationId } = get();
+        if (!publicationId) return;
 
-          if (
-            !publicationId
-          )
-            return;
+        try {
+          set({ isAnalyzing: true, flowError: null });
 
-          try {
-            set({
-              isAnalyzing: true,
-              flowError: null,
-            });
+          const data: any = await inventoryService.answerPublication(publicationId, answers);
 
-            const data =
-              await inventoryService.answerPublication(
-                publicationId,
-                answers
-              );
-
-            set({
-              questions:
-                data.questions ||
-                [],
-              draftData:
-                data.draftData ||
-                null,
-              isAnalyzing: false,
-            });
-          } catch (
-          error: any
-          ) {
-            set({
-              isAnalyzing: false,
-              flowError:
-                error.message ||
-                "Error respondiendo",
-            });
+          set({
+            questions: [], 
+            draftData: data.recommendation || null,
+            isAnalyzing: false,
+          });
+        } catch (error: any) {
+          let friendlyMessage = "Error respondiendo";
+          const errorStr = String(error.message || "");
+          if (errorStr.includes("429") || errorStr.includes("quota")) {
+            friendlyMessage = "La IA está procesando muchas solicitudes. Intenta en un momento.";
           }
-        },
+          set({
+            isAnalyzing: false,
+            flowError: friendlyMessage,
+          });
+        }
+      },
 
       publishFinal:
         async (
@@ -470,14 +437,15 @@ export const useInventoryStore =
               isPublishing: false,
               currentView: "catalog",
             });
-          } catch (
-          error: any
-          ) {
+          } catch (error: any) {
+            let friendlyMessage = "Error publicando";
+            const errorStr = String(error.message || "");
+            if (errorStr.includes("429") || errorStr.includes("quota")) {
+              friendlyMessage = "Estamos experimentando alta demanda. Por favor, intenta de nuevo en unos segundos.";
+            }
             set({
               isPublishing: false,
-              flowError:
-                error.message ||
-                "Error publicando",
+              flowError: friendlyMessage,
             });
           }
         },

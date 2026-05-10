@@ -1,285 +1,258 @@
 // views/DigitizerView.jsx — Módulo de Digitalización con IA
-// Flujo: Cargar imagen → Analizar con Gemini → Validar datos → Publicar
-// Diseñado para usuarios con baja alfabetización digital
+// Flujo: Cargar imagen → Responder Preguntas IA → Refinar → Publicar
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useInventoryStore, CATEGORIES, LOCATIONS } from "../store/inventoryStore";
-import { useAuthStore } from "../store/authStore";
+import { useState, useRef, useEffect } from "react";
+import { useInventoryStore } from "../store/inventoryStore";
 
-// ─── Paso 1: Zona de carga de imagen (Drag & Drop) ────────────────────────────
+// ─── Componente: Zona de carga de imagen ─────────────────────────────────────
 function ImageUploadZone({ onImageSelected, preview, isAnalyzing }) {
-  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef(null);
-
-  // Prevenir comportamiento por defecto del navegador en drag
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file && file.type.startsWith("image/")) {
-        onImageSelected(file);
-      }
-    },
-    [onImageSelected]
-  );
-
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onImageSelected(file);
-    }
+    if (file) onImageSelected(file);
   };
 
-  // Si hay previsualización, mostrar la imagen
   if (preview) {
     return (
-      <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-200">
-        <img
-          src={preview}
-          alt="Producto a digitalizar"
-          className="w-full h-56 object-cover"
-        />
-        {/* Overlay de análisis IA */}
+      <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-100 shadow-sm">
+        <img src={preview} alt="Vista previa" className="w-full h-64 object-cover" />
         {isAnalyzing && (
-          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
-            <div className="w-10 h-10 border-3 border-white border-t-emerald-400 rounded-full animate-spin mb-3" />
-            <p className="text-white font-medium text-sm">Analizando con IA...</p>
-            <p className="text-white/70 text-xs mt-1">Esto tarda unos segundos</p>
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
+            <div className="w-10 h-10 border-4 border-white border-t-emerald-400 rounded-full animate-spin mb-3" />
+            <p className="font-bold">Analizando...</p>
           </div>
         )}
-        {/* Botón para cambiar imagen */}
         {!isAnalyzing && (
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="absolute top-3 right-3 bg-white/90 text-stone-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-white shadow-sm"
-          >
-            📸 Cambiar foto
-          </button>
+          <button onClick={() => inputRef.current?.click()} className="absolute top-3 right-3 bg-white/90 text-stone-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-xl">📸 Cambiar</button>
         )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+        <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
       </div>
     );
   }
 
-  // Zona de arrastrar y soltar (estado vacío)
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onClick={() => inputRef.current?.click()}
-      className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${isDragging
-        ? "border-emerald-500 bg-emerald-50"
-        : "border-stone-300 bg-stone-50 hover:border-emerald-400 hover:bg-emerald-50/50"
-        }`}
-    >
-      <div className="text-6xl mb-4">📸</div>
-      <p className="font-bold text-stone-800 text-lg">
-        Toma una foto o sube un archivo
-      </p>
-      <p className="text-stone-500 text-sm mt-2 max-w-[240px] mx-auto">
-        Puedes arrastrar la imagen aquí, usar tu cámara o buscar en tu PC.
-      </p>
-      <div className="mt-6 inline-flex items-center gap-2 bg-emerald-600 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-emerald-700 transition-colors">
-        <span>📁 Elegir imagen</span>
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"  // En móvil, sugiere abrir la cámara
-        className="hidden"
-        onChange={handleFileChange}
-      />
+    <div onClick={() => inputRef.current?.click()} className="border-2 border-dashed border-stone-200 bg-stone-50 rounded-2xl p-12 text-center cursor-pointer hover:border-emerald-300 transition-all">
+      <div className="text-5xl mb-4">📸</div>
+      <h3 className="text-lg font-bold text-stone-800">Sube una foto</h3>
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
     </div>
   );
 }
 
+// ─── Componente: Formulario de Preguntas ─────────────────────────────────────
+function QuestionsForm({ questions, onSubmit, isAnalyzing }) {
+  const [answers, setAnswers] = useState({});
 
-// ─── Pantalla de éxito ────────────────────────────────────────────────────────
-function SuccessScreen({ onNew, onDashboard }) {
+  const handleAnswer = (q, val) => {
+    setAnswers(prev => ({ ...prev, [q]: val }));
+  };
+
   return (
-    <div className="text-center py-10">
-      <div className="text-6xl mb-4">✨</div>
-      <h3 className="text-xl font-bold text-stone-800">¡Analizado exitosamente!</h3>
-      <p className="text-stone-500 mt-2">
-        La IA ha procesado tu producto y lo ha guardado como borrador.
-      </p>
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={onNew}
-          className="flex-1 py-3 rounded-xl border border-emerald-600 text-emerald-600 font-medium hover:bg-emerald-50"
-        >
-          Analizar otro
-        </button>
-        <button
-          onClick={onDashboard}
-          className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
-        >
-          Ir al inicio
-        </button>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="bg-white rounded-3xl p-6 border border-stone-100 shadow-sm space-y-6">
+        <h3 className="text-xl font-black text-stone-800 leading-tight">Gemini tiene unas preguntas para mejorar tu publicación:</h3>
+        
+        {questions.map((q, i) => (
+          <div key={i} className="space-y-2">
+            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">{q}</label>
+            <input
+              type="text"
+              placeholder="Tu respuesta..."
+              onChange={(e) => handleAnswer(q, e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-bold outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+        ))}
       </div>
+
+      <button
+        onClick={() => onSubmit(answers)}
+        disabled={isAnalyzing}
+        className="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black text-xl shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all"
+      >
+        {isAnalyzing ? "Analizando..." : "Siguiente ✨"}
+      </button>
     </div>
   );
 }
 
-// ─── Vista principal del Digitalizador ───────────────────────────────────────
+// ─── Componente: Formulario de Refinamiento ──────────────────────────────────
+function RefinementForm({ recommendation, onSubmit, isPublishing }) {
+  const [form, setForm] = useState({
+    titulo: recommendation?.titulo || "",
+    descripcion: recommendation?.descripcion || "",
+    precio: recommendation?.precio || "",
+    categoria: recommendation?.categoria || recommendation?.tipo || "Producto",
+    moneda: recommendation?.moneda || "COP",
+  });
+
+  const handleChange = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="bg-white rounded-3xl p-6 border border-stone-100 shadow-sm space-y-5">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Título</label>
+          <input
+            type="text"
+            value={form.titulo}
+            onChange={(e) => handleChange("titulo", e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-black text-xl text-stone-800 outline-none"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Precio</label>
+            <input
+              type="text"
+              value={form.precio}
+              onChange={(e) => handleChange("precio", e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-black text-xl text-emerald-600 outline-none"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Moneda</label>
+            <select
+              value={form.moneda}
+              onChange={(e) => handleChange("moneda", e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-bold outline-none"
+            >
+              <option value="COP">COP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Descripción</label>
+          <textarea
+            value={form.descripcion}
+            onChange={(e) => handleChange("descripcion", e.target.value)}
+            rows={8}
+            className="w-full px-4 py-4 rounded-xl border border-stone-100 bg-stone-50 text-sm leading-relaxed outline-none resize-none"
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={() => onSubmit(form)}
+        disabled={isPublishing}
+        className="w-full py-5 rounded-2xl bg-stone-900 text-white font-black text-xl shadow-xl hover:bg-black transition-all"
+      >
+        {isPublishing ? "Publicando..." : "PUBLICAR AHORA 🚀"}
+      </button>
+    </div>
+  );
+}
+
 export default function DigitizerView() {
-  const { user } = useAuthStore();
   const {
+    questions,
     draftData,
     isAnalyzing,
+    isPublishing,
     flowError,
     startPublication,
-    resetFlow,
+    answerQuestions,
     publishFinal,
+    resetFlow,
     setView,
   } = useInventoryStore();
 
-  // Pasos del flujo: "upload" → "validate" → "success"
-  const [step, setStep] = useState("upload");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [publishedItemName, setPublishedItemName] = useState("");
-  const [intent, setIntent] = useState("Quiero publicar esto");
+  const [step, setStep] = useState("upload"); 
+  const [intent, setIntent] = useState("");
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // ── Paso 1: Usuario selecciona imagen ───────────────────────────────────────
-  const handleImageSelected = (file) => {
-    setSelectedFile(file);
-    setPreview(URL.createObjectURL(file));
-  };
+  // Control de pasos
+  useEffect(() => {
+    if (!isAnalyzing) {
+      if (questions && questions.length > 0) {
+        setStep("questions");
+      } else if (draftData && draftData.titulo) { // Si ya tenemos recomendación
+        setStep("refine");
+      }
+    }
+  }, [isAnalyzing, questions, draftData]);
 
-  const handleAnalyze = async () => {
+  const handleStart = async () => {
     if (!selectedFile) return;
     await startPublication(selectedFile, intent);
-    setPublishedItemName(intent || "Producto");
+  };
+
+  const handleAnswers = async (answers) => {
+    await answerQuestions(answers);
+  };
+
+  const handleFinalPublish = async (finalData) => {
+    const cleanPrice = String(finalData.precio).replace(/[^\d]/g, '');
+    await publishFinal({
+      ...finalData,
+      precio: cleanPrice ? parseInt(cleanPrice, 10) : 0,
+    });
     setStep("success");
   };
 
-  // El useEffect que cambiaba a validate ya no es necesario
-
-
-  // ── Resetear para agregar otro ──────────────────────────────────────────────
-  const handleNewItem = () => {
+  const handleReset = () => {
     resetFlow();
     setPreview(null);
+    setSelectedFile(null);
+    setIntent("");
     setStep("upload");
   };
 
   return (
-    <div className="space-y-5">
-      {/* ── Encabezado ────────────────────────────────────────────────── */}
-      <div>
-        <h2 className="text-xl font-bold text-stone-800">Digitalizador con IA</h2>
-        <p className="text-stone-500 text-sm mt-0.5">
-          Toma una foto y la IA completa los datos por ti
-        </p>
-      </div>
-
-      {/* ── Indicador de pasos ────────────────────────────────────────── */}
+    <div className="max-w-xl mx-auto space-y-8 pb-20 px-4">
       {step !== "success" && (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">
-              1
-            </div>
-            <span className="text-xs text-stone-700 font-medium">
-              Digitalizar
-            </span>
-          </div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-black text-stone-900 tracking-tight">Vender con IA</h2>
+          {step !== "upload" && (
+            <button onClick={handleReset} className="text-stone-400 font-bold text-xs uppercase tracking-widest">✕ Cancelar</button>
+          )}
         </div>
       )}
 
-      {/* ── Contenido por paso ────────────────────────────────────────── */}
       {step === "upload" && (
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
-            <label className="block text-sm font-semibold text-stone-700">
-              ¿Qué quieres publicar? (Opcional)
-            </label>
-            <textarea
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="Ej: Quiero publicar estos zapatos rojos usados en buen estado..."
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm resize-none"
-            />
-            <p className="text-[10px] text-stone-400">
-              Describe brevemente tu producto para que la IA sea más precisa.
-            </p>
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl p-8 border border-stone-100 shadow-sm space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">¿Qué vendes?</label>
+              <textarea
+                value={intent}
+                onChange={(e) => setIntent(e.target.value)}
+                placeholder="Ej: Silla de oficina ergonómica..."
+                className="w-full px-0 py-2 border-0 bg-transparent text-xl font-bold text-stone-800 outline-none resize-none"
+                rows={2}
+              />
+            </div>
+            <ImageUploadZone onImageSelected={(f) => { setSelectedFile(f); setPreview(URL.createObjectURL(f)); }} preview={preview} isAnalyzing={isAnalyzing} />
           </div>
-
-          <ImageUploadZone
-            onImageSelected={handleImageSelected}
-            preview={preview}
-            isAnalyzing={isAnalyzing}
-          />
-
           {preview && !isAnalyzing && (
-            <button
-              onClick={handleAnalyze}
-              className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-lg shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              ✨ Analizar con IA
-            </button>
+            <button onClick={handleStart} className="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black text-xl shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all">ANALIZAR IMAGEN ✨</button>
           )}
-
-          {/* Error de análisis */}
-          {flowError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-              <p className="text-red-600 text-sm">⚠️ {flowError}</p>
-            </div>
-          )}
-
-          {/* Instrucciones de uso */}
-          {!preview && (
-            <div className="bg-stone-100 rounded-2xl p-4 space-y-2">
-              <p className="text-sm font-medium text-stone-700">
-                💡 Consejos para mejores resultados:
-              </p>
-              <ul className="space-y-1.5">
-                {[
-                  "Usa buena iluminación natural",
-                  "Centra el producto en la foto",
-                  "Fondo limpio y sin distracciones",
-                ].map((tip) => (
-                  <li key={tip} className="flex items-start gap-2 text-xs text-stone-500">
-                    <span className="text-emerald-500 font-bold mt-0.5">✓</span>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {flowError && <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-center font-bold text-sm">⚠️ {flowError}</div>}
         </div>
+      )}
+
+      {step === "questions" && (
+        <QuestionsForm questions={questions} onSubmit={handleAnswers} isAnalyzing={isAnalyzing} />
+      )}
+
+      {step === "refine" && (
+        <RefinementForm recommendation={draftData} onSubmit={handleFinalPublish} isPublishing={isPublishing} />
       )}
 
       {step === "success" && (
-        <SuccessScreen
-          onNew={handleNewItem}
-          onDashboard={() => {
-            resetFlow();
-            setView("dashboard");
-          }}
-        />
+        <div className="text-center py-16 animate-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-10 text-5xl">✨</div>
+          <h3 className="text-4xl font-black text-stone-900 tracking-tight">¡Publicado!</h3>
+          <p className="text-stone-500 mt-4 text-lg">Tu producto ya está en el catálogo.</p>
+          <div className="flex flex-col gap-4 mt-12">
+            <button onClick={handleReset} className="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black text-lg">OTRA PUBLICACIÓN</button>
+            <button onClick={() => setView("dashboard")} className="w-full py-5 rounded-2xl bg-white border-2 border-stone-100 text-stone-400 font-black text-xs uppercase tracking-widest">IR AL INICIO</button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -66,8 +66,8 @@ export default function PublicationDetailView() {
               <h1 className="text-2xl font-bold text-stone-800 mt-2">{selectedItem.titulo || "Sin título"}</h1>
             </div>
             <p className="text-2xl font-black text-emerald-600">
-              {typeof selectedItem.precio === 'number' 
-                ? `$${selectedItem.precio.toLocaleString()}` 
+              {typeof selectedItem.precio === 'number'
+                ? `$${selectedItem.precio.toLocaleString()}`
                 : selectedItem.precio || "A convenir"}
             </p>
           </div>
