@@ -1,18 +1,21 @@
 // components/ui/LoadingScreen.jsx — Pantalla de carga inicial
-// Se muestra mientras Firebase verifica la sesión del usuario
+import { Store } from "lucide-react";
 
 export default function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center">
-      <div className="text-center">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+      <div className="text-center animate-in fade-in duration-700">
         {/* Ícono animado */}
-        <div className="text-5xl mb-4 animate-bounce">🏪</div>
-        <h1 className="text-xl font-bold text-stone-800">Mercado Digital</h1>
-        <p className="text-stone-400 text-sm mt-2">Cargando tu negocio...</p>
+        <div className="w-20 h-20 bg-emerald-600 rounded-[2rem] flex items-center justify-center text-white mx-auto mb-6 shadow-2xl shadow-emerald-200 animate-bounce">
+          <Store size={40} />
+        </div>
+        
+        <h1 className="text-2xl font-black text-stone-900 tracking-tighter uppercase">Mercado Digital</h1>
+        <p className="text-stone-400 text-xs font-black uppercase tracking-[0.2em] mt-3">Cargando experiencia...</p>
 
         {/* Indicador de progreso */}
-        <div className="mt-6 w-32 h-1.5 bg-stone-200 rounded-full overflow-hidden mx-auto">
-          <div className="h-full bg-emerald-500 rounded-full animate-pulse w-3/4" />
+        <div className="mt-8 w-40 h-1 bg-stone-100 rounded-full overflow-hidden mx-auto">
+          <div className="h-full bg-emerald-500 rounded-full animate-progress-loading" />
         </div>
       </div>
     </div>

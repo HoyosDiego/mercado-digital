@@ -26,6 +26,7 @@ export interface PublicationItem {
   imageUrl: string;
   titulo: string;
   precio: string | number;
+  descripcion?: string;
   createdAt: string;
 }
 

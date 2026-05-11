@@ -1,63 +1,72 @@
 // views/DashboardView.jsx
-// Dashboard REAL conectado al store Zustand + Publications
-
 import { useEffect } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useInventoryStore } from "../store/inventoryStore";
+import { 
+  Package, 
+  FileEdit, 
+  Rocket, 
+  Clock, 
+  Camera, 
+  FolderTree, 
+  ChevronRight, 
+  Store,
+  LayoutDashboard,
+  Sparkles,
+  AlertCircle
+} from "lucide-react";
 
-// ─────────────────────────────────────────────
-// CARD ESTADÍSTICA
-// ─────────────────────────────────────────────
+// ─── Componente: Card Estadística ───────────────────────────────────────────
 function StatCard({ label, value, icon, color, data }) {
   if (data) {
     return (
-      <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm transition-all hover:shadow-md flex flex-col justify-between">
+      <div className="bg-white rounded-3xl p-6 border border-stone-100 shadow-sm transition-all hover:shadow-md flex flex-col justify-between group">
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-2xl">{icon}</span>
-            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${color}`}>
-              IA
+          <div className="flex items-center justify-between mb-4">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-stone-400 group-hover:text-emerald-500 transition-colors`}>
+              {icon}
+            </div>
+            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${color}`}>
+              RECOMENDADO
             </span>
           </div>
-          <p className="text-sm font-black text-stone-800 line-clamp-2 leading-tight">{data.titulo}</p>
-          <p className="text-lg font-black text-emerald-600 mt-1">
-            {typeof data.precio === 'number' ? `$${data.precio.toLocaleString()}` : data.precio}
-          </p>
+          <p className="text-sm font-black text-stone-800 line-clamp-2 leading-tight uppercase tracking-tight">{data.titulo}</p>
+          <div className="flex items-baseline gap-1 mt-2">
+            <span className="text-[10px] font-black text-emerald-600 uppercase">COP</span>
+            <p className="text-xl font-black text-stone-900 tracking-tighter">
+              {typeof data.precio === 'number' ? data.precio.toLocaleString() : data.precio}
+            </p>
+          </div>
         </div>
-        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter mt-3">{label}</p>
+        <p className="text-[9px] font-black text-stone-300 uppercase tracking-[0.2em] mt-4">{label}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-2xl">{icon}</span>
-        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${color}`}>
-          hoy
+    <div className="bg-white rounded-3xl p-6 border border-stone-100 shadow-sm transition-all hover:shadow-md group">
+      <div className="flex items-center justify-between mb-4">
+        <div className="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center text-stone-300 group-hover:text-emerald-500 group-hover:bg-emerald-50 transition-all">
+          {icon}
+        </div>
+        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${color}`}>
+          ESTADO
         </span>
       </div>
-      <p className="text-3xl font-black text-stone-800">{value}</p>
-      <p className="text-xs font-bold text-stone-400 uppercase tracking-tighter mt-1">{label}</p>
+      <p className="text-3xl font-black text-stone-900 tracking-tighter">{value}</p>
+      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mt-1">{label}</p>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// CARD PUBLICACIÓN
-// ─────────────────────────────────────────────
+// ─── Componente: Card Publicación ───────────────────────────────────────────
 function PublicationCard({ item }) {
   const { setView, setSelectedItem } = useInventoryStore();
 
   const statusColors = {
-    DRAFT: "bg-amber-100 text-amber-700",
-    PUBLISHED: "bg-emerald-100 text-emerald-700",
-    PENDING: "bg-blue-100 text-blue-700",
+    DRAFT: "bg-amber-50 text-amber-600 border-amber-100",
+    PUBLISHED: "bg-emerald-50 text-emerald-600 border-emerald-100",
   };
-
-  const image =
-    item.imageUrl ||
-    "https://via.placeholder.com/100x100?text=IMG";
 
   return (
     <div 
@@ -65,48 +74,41 @@ function PublicationCard({ item }) {
         setSelectedItem(item);
         setView("publication_detail");
       }}
-      className="bg-white border border-stone-100 rounded-2xl p-3 shadow-sm cursor-pointer hover:border-emerald-200 transition-all active:scale-[0.98]"
+      className="bg-white border border-stone-100 rounded-2xl p-4 shadow-sm cursor-pointer hover:border-emerald-200 hover:shadow-md transition-all active:scale-[0.98] group"
     >
-      <div className="flex gap-3">
+      <div className="flex items-center gap-4">
         <img
-          src={image}
+          src={item.imageUrl || "https://via.placeholder.com/100x100?text=IMG"}
           alt={item.titulo}
-          className="w-20 h-20 rounded-xl object-cover bg-stone-100"
+          className="w-16 h-16 rounded-xl object-cover bg-stone-50 border border-stone-100"
         />
 
         <div className="flex-1 min-w-0">
-          <div className="flex justify-between gap-2">
-            <h4 className="font-semibold text-stone-800 truncate">
+          <div className="flex justify-between items-start gap-2">
+            <h4 className="font-black text-stone-800 truncate uppercase text-xs tracking-tight group-hover:text-emerald-700 transition-colors">
               {item.titulo || "Sin título"}
             </h4>
-
             <span
-              className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[item.status] ||
-                "bg-stone-100 text-stone-700"
-                }`}
+              className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border ${statusColors[item.status] || "bg-stone-50 text-stone-400 border-stone-100"}`}
             >
               {item.status}
             </span>
           </div>
 
-          <p className="text-emerald-600 font-bold mt-1">
-            {item.precio || "A convenir"}
-          </p>
-
-          <p className="text-xs text-stone-400 mt-2">
-            {item.createdAt
-              ? new Date(item.createdAt).toLocaleDateString()
-              : ""}
-          </p>
+          <div className="flex items-baseline gap-1 mt-1">
+             <span className="text-[9px] font-black text-emerald-600 uppercase">COP</span>
+             <p className="text-base font-black text-stone-900 tracking-tighter">
+               {typeof item.precio === 'number' ? item.precio.toLocaleString() : (item.precio || "0")}
+             </p>
+          </div>
         </div>
+        <ChevronRight size={16} className="text-stone-200 group-hover:text-emerald-500 transition-colors" />
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// QUICK ACTION
-// ─────────────────────────────────────────────
+// ─── Componente: Acción Rápida ──────────────────────────────────────────────
 function QuickAction({
   icon,
   label,
@@ -117,169 +119,134 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-2xl border transition-all hover:shadow-md ${highlight
-          ? "bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700"
+      className={`w-full text-left p-6 rounded-[2rem] border transition-all hover:shadow-xl active:scale-[0.98] group relative overflow-hidden ${highlight
+          ? "bg-emerald-600 border-emerald-600 text-white"
           : "bg-white border-stone-100 text-stone-800 hover:border-emerald-200"
         }`}
     >
-      <div className="flex gap-3">
-        <span className="text-2xl">{icon}</span>
-
-        <div>
-          <p className="font-semibold text-sm">{label}</p>
-
-          <p
-            className={`text-xs mt-1 ${highlight
-                ? "text-emerald-100"
-                : "text-stone-500"
-              }`}
-          >
-            {description}
-          </p>
+      {highlight && (
+        <div className="absolute top-0 right-0 p-4 text-white/10 group-hover:rotate-12 transition-transform">
+           <Sparkles size={80} />
         </div>
+      )}
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${highlight ? 'bg-stone-100 text-stone-600' : 'bg-stone-50 text-stone-400 group-hover:bg-emerald-50 group-hover:text-emerald-500'}`}>
+          {icon}
+        </div>
+
+        <div className="flex-1">
+          <p className="font-black text-sm uppercase tracking-tight">{label}</p>
+          <p className={`text-xs mt-1 font-medium ${highlight ? "text-emerald-50" : "text-stone-400"}`}>{description}</p>
+        </div>
+        <ChevronRight size={20} className={highlight ? "text-emerald-200" : "text-stone-200"} />
       </div>
     </button>
   );
 }
 
-// ─────────────────────────────────────────────
-// MAIN VIEW
-// ─────────────────────────────────────────────
+// ─── Componente Principal: DashboardView ────────────────────────────────────
 export default function DashboardView() {
   const { user } = useAuthStore();
+  const { items, isLoadingItems, itemsError, fetchItems, setView } = useInventoryStore();
 
-  const {
-    items,
-    isLoadingItems,
-    itemsError,
-    fetchItems,
-    setView,
-  } = useInventoryStore();
-
-  // 🔥 cargar publicaciones reales
   useEffect(() => {
     fetchItems();
   }, []);
 
-  // saludo dinámico
   const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
 
-  const greeting =
-    hour < 12
-      ? "Buenos días"
-      : hour < 18
-        ? "Buenas tardes"
-        : "Buenas noches";
-
-  // stats reales
   const total = items.length;
-
-  const drafts = items.filter(
-    (x) => x.status === "DRAFT"
-  ).length;
-
-  const published = items.filter(
-    (x) => x.status === "PUBLISHED"
-  ).length;
-
-  const pending = items.filter(
-    (x) => x.status === "PENDING"
-  ).length;
-
+  const drafts = items.filter(x => x.status === "DRAFT").length;
+  const published = items.filter(x => x.status === "PUBLISHED").length;
   const recentItems = items.slice(0, 3);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 pb-20 animate-in fade-in duration-700">
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-stone-500 text-sm">
-            {greeting} 👋
-          </p>
-
-          <h2 className="text-xl font-bold text-stone-800">
-            {user?.displayName || "Comerciante"}
+          <div className="flex items-center gap-2 mb-1">
+             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+             <p className="text-stone-400 font-black text-[10px] uppercase tracking-[0.2em]">{greeting}</p>
+          </div>
+          <h2 className="text-3xl font-black text-stone-900 tracking-tight uppercase">
+            {user?.displayName?.split(' ')[0] || "Comerciante"}
           </h2>
         </div>
 
-        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-          <span className="font-bold text-emerald-700">
-            {(user?.displayName || "C")
-              .charAt(0)
-              .toUpperCase()}
+        <div className="w-14 h-14 rounded-[1.5rem] bg-white border border-stone-100 flex items-center justify-center shadow-sm relative group overflow-hidden">
+           <div className="absolute inset-0 bg-emerald-500 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+           <span className="font-black text-xl text-stone-800 group-hover:text-white relative z-10 transition-colors">
+            {(user?.displayName || "C").charAt(0).toUpperCase()}
           </span>
         </div>
       </div>
 
       {/* STATS */}
       {isLoadingItems ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((x) => (
-            <div
-              key={x}
-              className="h-28 rounded-2xl bg-stone-100 animate-pulse"
-            />
+            <div key={x} className="h-32 rounded-3xl bg-stone-50 animate-pulse border border-stone-100" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <StatCard
-            label="Total"
+            label="Mis Productos"
             value={total}
-            icon="📦"
-            color="bg-stone-100 text-stone-700"
+            icon={<Package size={24} />}
+            color="bg-stone-100 text-stone-500"
           />
-
           <StatCard
-            label="Borradores"
+            label="En Borrador"
             value={drafts}
-            icon="📝"
-            color="bg-amber-100 text-amber-700"
+            icon={<FileEdit size={24} />}
+            color="bg-amber-100 text-amber-600"
           />
-
           <StatCard
-            label="Publicados"
+            label="En Vitrina"
             value={published}
-            icon="🚀"
-            color="bg-emerald-100 text-emerald-700"
+            icon={<Rocket size={24} />}
+            color="bg-emerald-100 text-emerald-600"
           />
-
           <StatCard
-            label="Pendientes"
-            value={pending}
-            icon="⏳"
-            color="bg-blue-100 text-blue-700"
+            label="Sincronizado"
+            value="100%"
+            icon={<Clock size={24} />}
+            color="bg-blue-100 text-blue-600"
           />
         </div>
       )}
 
       {/* ERROR */}
       {itemsError && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-          <p className="text-red-700 font-medium">Error cargando publicaciones</p>
-          <p className="text-red-600 text-sm mt-1">{itemsError}</p>
+        <div className="bg-red-50 border border-red-100 rounded-3xl p-6 flex items-center gap-4 animate-shake">
+          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-red-500 shadow-sm">
+             <AlertCircle size={24} />
+          </div>
+          <div>
+            <p className="text-red-900 font-black text-sm uppercase tracking-tight">Error de conexión</p>
+            <p className="text-red-600 text-xs mt-1 font-medium">{itemsError}</p>
+          </div>
         </div>
       )}
 
-      {/* QUICK ACTIONS */}
-      <div>
-        <h3 className="text-sm font-semibold text-stone-600 uppercase tracking-wide mb-3">
-          ¿Qué quieres hacer?
-        </h3>
-
-        <div className="space-y-2">
+      {/* ACCIONES RÁPIDAS */}
+      <div className="space-y-4">
+        <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.25em] ml-1">Centro de operaciones</h3>
+        <div className="grid grid-cols-1 gap-4">
           <QuickAction
-            icon="📸"
-            label="Crear publicación con IA"
-            description="Sube una foto y Publixia hace el resto"
+            icon={<Camera size={28} />}
+            label="Vender con IA"
+            description="Escanea un producto y publícalo en segundos"
             onClick={() => setView("digitizer")}
             highlight
           />
-
           <QuickAction
-            icon="🗂️"
-            label="Ver publicaciones"
-            description="Administra tus productos publicados"
+            icon={<FolderTree size={28} />}
+            label="Mi Inventario"
+            description="Gestiona tus productos y borradores"
             onClick={() => setView("catalog")}
           />
         </div>
@@ -287,26 +254,20 @@ export default function DashboardView() {
 
       {/* ÚLTIMAS */}
       {recentItems.length > 0 && (
-        <div>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-semibold text-stone-600 uppercase tracking-wide">
-              Últimas publicaciones
-            </h3>
-
+        <div className="space-y-4">
+          <div className="flex justify-between items-end px-1">
+            <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.25em]">Actividad reciente</h3>
             <button
               onClick={() => setView("catalog")}
-              className="text-emerald-600 text-sm font-medium hover:underline"
+              className="text-emerald-600 text-[10px] font-black uppercase tracking-widest hover:text-emerald-700 transition-colors"
             >
-              Ver todas
+              Ver todo
             </button>
           </div>
 
           <div className="space-y-3">
             {recentItems.map((item) => (
-              <PublicationCard
-                key={item.id}
-                item={item}
-              />
+              <PublicationCard key={item.id} item={item} />
             ))}
           </div>
         </div>
@@ -314,22 +275,17 @@ export default function DashboardView() {
 
       {/* EMPTY */}
       {!isLoadingItems && items.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-5xl mb-4">🏪</p>
-
-          <p className="font-semibold text-stone-700">
-            Aún no tienes publicaciones
-          </p>
-
-          <p className="text-sm text-stone-400 mt-1">
-            Sube una foto y empieza hoy
-          </p>
-
+        <div className="text-center py-20 bg-stone-50 rounded-[3rem] border border-dashed border-stone-200">
+          <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-stone-200 shadow-sm">
+            <Store size={48} />
+          </div>
+          <h4 className="text-xl font-black text-stone-800 tracking-tight uppercase">Tu tienda está vacía</h4>
+          <p className="text-stone-400 text-sm mt-2 font-medium">Usa nuestra IA para crear tu primera publicación.</p>
           <button
             onClick={() => setView("digitizer")}
-            className="mt-5 px-6 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700"
+            className="mt-8 px-8 py-4 rounded-2xl bg-emerald-600 text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-[0.98]"
           >
-            Crear primera publicación
+            Empezar ahora
           </button>
         </div>
       )}

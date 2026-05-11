@@ -1,13 +1,20 @@
 // components/layout/Navbar.jsx — Barra de navegación principal
-// Menú sidebar que se abre de izquierda a derecha
-
 import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
+import { 
+  Menu, 
+  X, 
+  LayoutDashboard, 
+  Camera, 
+  FolderTree, 
+  Store, 
+  LogOut 
+} from "lucide-react";
 
 const NAV_ITEMS = [
-  { view: "dashboard", icon: "🏠", label: "Inicio" },
-  { view: "digitizer", icon: "📸", label: "Digitalizar" },
-  { view: "catalog", icon: "🗂️", label: "Catálogo" },
+  { view: "dashboard", icon: <LayoutDashboard size={20} />, label: "Inicio" },
+  { view: "digitizer", icon: <Camera size={20} />, label: "Digitalizar" },
+  { view: "catalog", icon: <FolderTree size={20} />, label: "Catálogo" },
 ];
 
 export default function Navbar({ currentView, onNavigate }) {
@@ -28,30 +35,35 @@ export default function Navbar({ currentView, onNavigate }) {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-stone-600 hover:text-stone-800 text-2xl leading-none transition-colors"
+              className="text-stone-600 hover:text-stone-800 p-1 rounded-lg hover:bg-stone-50 transition-all"
               title="Abrir menú"
             >
-              ☰
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🏪</span>
-              <span className="font-bold text-stone-800 text-sm">Mercado Digital</span>
+              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white shadow-sm shadow-emerald-200">
+                <Store size={18} />
+              </div>
+              <span className="font-bold text-stone-800 text-sm tracking-tight">Mercado Digital</span>
             </div>
           </div>
 
           {/* Avatar + Salir */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-              <span className="text-emerald-700 font-bold text-xs">
-                {(user?.displayName || "C").charAt(0).toUpperCase()}
-              </span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center border border-stone-200">
+                <span className="text-stone-600 font-bold text-xs">
+                  {(user?.displayName || "C").charAt(0).toUpperCase()}
+                </span>
+              </div>
             </div>
             <button
               onClick={logout}
-              className="text-stone-400 hover:text-stone-600 text-xs font-medium transition-colors"
+              className="text-stone-400 hover:text-red-500 transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"
               title="Cerrar sesión"
             >
-              Salir
+              <LogOut size={14} />
+              <span>Salir</span>
             </button>
           </div>
         </div>
@@ -60,48 +72,57 @@ export default function Navbar({ currentView, onNavigate }) {
       {/* ── Overlay oscuro ────────────────────────────────────────── */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-30 transition-opacity duration-300"
+          className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-30 transition-opacity duration-300"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
 
       {/* ── Menú sidebar desde la izquierda ────────────────────────── */}
       <nav
-        className={`fixed left-0 top-0 h-screen w-64 bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-screen w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
           isMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Encabezado del menú */}
-        <div className="flex items-center justify-between p-4 border-b border-stone-100 h-14">
+        <div className="flex items-center justify-between p-4 border-b border-stone-100 h-14 bg-stone-50/50">
           <div className="flex items-center gap-2">
-            <span className="text-3xl">🏪</span>
-            <span className="font-bold text-stone-800 text-sm">Menú</span>
+            <Store size={20} className="text-emerald-600" />
+            <span className="font-black text-stone-800 text-sm uppercase tracking-widest">Navegación</span>
           </div>
           <button
             onClick={() => setIsMenuOpen(false)}
-            className="text-stone-400 hover:text-stone-600 text-2xl leading-none"
+            className="text-stone-400 hover:text-stone-800 p-1 transition-colors"
             title="Cerrar menú"
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 
         {/* Ítems de navegación */}
-        <div className="px-2 py-4 space-y-2">
+        <div className="px-3 py-6 space-y-2">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.view}
               onClick={() => handleNavigate(item.view)}
-              className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-sm font-medium transition-all ${
+              className={`w-full text-left px-4 py-3.5 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${
                 currentView === item.view
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "text-stone-700 hover:bg-stone-100"
+                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-100 translate-x-1"
+                  : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
               }`}
             >
-              <span className="text-lg">{item.icon}</span>
+              <span className={currentView === item.view ? "text-white" : "text-stone-400"}>
+                {item.icon}
+              </span>
               <span>{item.label}</span>
             </button>
           ))}
+        </div>
+
+        <div className="absolute bottom-6 left-0 w-full px-6">
+          <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100">
+             <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">Usuario</p>
+             <p className="text-sm font-bold text-stone-800 truncate">{user?.displayName || user?.email || "Usuario Local"}</p>
+          </div>
         </div>
       </nav>
     </>
