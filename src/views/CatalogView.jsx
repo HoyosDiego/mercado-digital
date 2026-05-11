@@ -38,7 +38,6 @@ function PublicationCard({ item }) {
     DRAFT: "bg-amber-100 text-amber-700",
     PUBLISHED:
       "bg-emerald-100 text-emerald-700",
-    PENDING: "bg-blue-100 text-blue-700",
   };
 
   return (
@@ -138,11 +137,6 @@ export default function CatalogView() {
       value: "PUBLISHED",
       label: "Publicados",
       icon: "🚀",
-    },
-    {
-      value: "PENDING",
-      label: "Pendientes",
-      icon: "⏳",
     },
   ];
 

@@ -22,7 +22,7 @@ export interface InventoryItem {
 
 export interface PublicationItem {
   id: string;
-  status: "DRAFT" | "PUBLISHED" | "PENDING";
+  status: "DRAFT" | "PUBLISHED";
   imageUrl: string;
   titulo: string;
   precio: string | number;

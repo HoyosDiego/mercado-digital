@@ -79,12 +79,25 @@ function QuestionsForm({ questions, onSubmit, isAnalyzing }) {
 // ─── Componente: Formulario de Refinamiento ──────────────────────────────────
 function RefinementForm({ recommendation, onSubmit, isPublishing }) {
   const [form, setForm] = useState({
-    titulo: recommendation?.titulo || "",
-    descripcion: recommendation?.descripcion || "",
-    precio: recommendation?.precio || "",
-    categoria: recommendation?.categoria || recommendation?.tipo || "Producto",
-    moneda: recommendation?.moneda || "COP",
+    titulo: "",
+    descripcion: "",
+    precio: "",
+    categoria: "Producto",
+    moneda: "COP",
   });
+
+  // Sincronizar cuando llegue la recomendación
+  useEffect(() => {
+    if (recommendation) {
+      setForm({
+        titulo: recommendation.titulo || "",
+        descripcion: recommendation.descripcion || recommendation.description || "",
+        precio: recommendation.precio || "",
+        categoria: recommendation.categoria || recommendation.tipo || "Producto",
+        moneda: recommendation.moneda || "COP",
+      });
+    }
+  }, [recommendation]);
 
   const handleChange = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
 
@@ -97,7 +110,7 @@ function RefinementForm({ recommendation, onSubmit, isPublishing }) {
             type="text"
             value={form.titulo}
             onChange={(e) => handleChange("titulo", e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-black text-xl text-stone-800 outline-none"
+            className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-black text-xl text-stone-800 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
           />
         </div>
 
@@ -108,7 +121,7 @@ function RefinementForm({ recommendation, onSubmit, isPublishing }) {
               type="text"
               value={form.precio}
               onChange={(e) => handleChange("precio", e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-black text-xl text-emerald-600 outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-black text-xl text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             />
           </div>
           <div className="space-y-2">
@@ -116,7 +129,7 @@ function RefinementForm({ recommendation, onSubmit, isPublishing }) {
             <select
               value={form.moneda}
               onChange={(e) => handleChange("moneda", e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-bold outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             >
               <option value="COP">COP</option>
               <option value="USD">USD</option>
@@ -125,12 +138,22 @@ function RefinementForm({ recommendation, onSubmit, isPublishing }) {
         </div>
 
         <div className="space-y-2">
+          <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Categoría</label>
+          <input
+            type="text"
+            value={form.categoria}
+            onChange={(e) => handleChange("categoria", e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-stone-100 bg-stone-50 font-bold text-stone-700 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+          />
+        </div>
+
+        <div className="space-y-2">
           <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Descripción</label>
           <textarea
             value={form.descripcion}
             onChange={(e) => handleChange("descripcion", e.target.value)}
             rows={8}
-            className="w-full px-4 py-4 rounded-xl border border-stone-100 bg-stone-50 text-sm leading-relaxed outline-none resize-none"
+            className="w-full px-4 py-4 rounded-xl border border-stone-100 bg-stone-50 text-sm leading-relaxed outline-none resize-none focus:ring-2 focus:ring-emerald-500 transition-all"
           />
         </div>
       </div>
@@ -138,7 +161,7 @@ function RefinementForm({ recommendation, onSubmit, isPublishing }) {
       <button
         onClick={() => onSubmit(form)}
         disabled={isPublishing}
-        className="w-full py-5 rounded-2xl bg-stone-900 text-white font-black text-xl shadow-xl hover:bg-black transition-all"
+        className="w-full py-5 rounded-2xl bg-stone-900 text-white font-black text-xl shadow-xl hover:bg-black transition-all active:scale-[0.98]"
       >
         {isPublishing ? "Publicando..." : "PUBLICAR AHORA 🚀"}
       </button>
@@ -186,10 +209,11 @@ export default function DigitizerView() {
   };
 
   const handleFinalPublish = async (finalData) => {
-    const cleanPrice = String(finalData.precio).replace(/[^\d]/g, '');
+    // Limpiar precio: dejar solo números y punto decimal
+    const cleanPrice = String(finalData.precio).replace(/[^0-9.]/g, '');
     await publishFinal({
       ...finalData,
-      precio: cleanPrice ? parseInt(cleanPrice, 10) : 0,
+      precio: cleanPrice ? parseFloat(cleanPrice) : 0,
     });
     setStep("success");
   };
@@ -246,11 +270,21 @@ export default function DigitizerView() {
       {step === "success" && (
         <div className="text-center py-16 animate-in zoom-in duration-500">
           <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-10 text-5xl">✨</div>
-          <h3 className="text-4xl font-black text-stone-900 tracking-tight">¡Publicado!</h3>
-          <p className="text-stone-500 mt-4 text-lg">Tu producto ya está en el catálogo.</p>
+          <h3 className="text-4xl font-black text-stone-900 tracking-tight">¡Publicado con éxito!</h3>
+          <p className="text-stone-500 mt-4 text-lg">Tu producto ya está visible en el catálogo.</p>
           <div className="flex flex-col gap-4 mt-12">
-            <button onClick={handleReset} className="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black text-lg">OTRA PUBLICACIÓN</button>
-            <button onClick={() => setView("dashboard")} className="w-full py-5 rounded-2xl bg-white border-2 border-stone-100 text-stone-400 font-black text-xs uppercase tracking-widest">IR AL INICIO</button>
+            <button 
+              onClick={handleReset} 
+              className="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black text-lg shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-[0.98]"
+            >
+              CONTINUAR EN VENDER CON IA 🚀
+            </button>
+            <button 
+              onClick={() => setView("dashboard")} 
+              className="w-full py-5 rounded-2xl bg-white border-2 border-stone-100 text-stone-500 font-black text-xs uppercase tracking-widest hover:bg-stone-50 transition-all active:scale-[0.98]"
+            >
+              Ir al inicio
+            </button>
           </div>
         </div>
       )}

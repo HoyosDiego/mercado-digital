@@ -19,7 +19,6 @@ export const CATEGORIES = {
   // filtros de estado
   DRAFT: "DRAFT",
   PUBLISHED: "PUBLISHED",
-  PENDING: "PENDING",
 } as const;
 
 export const LOCATIONS = {
@@ -48,8 +47,7 @@ type ViewType =
 type CategoryFilter =
   | "all"
   | "DRAFT"
-  | "PUBLISHED"
-  | "PENDING";
+  | "PUBLISHED";
 
 type LocationFilter =
   | "all"
@@ -231,8 +229,14 @@ export const useInventoryStore =
             const data =
               await inventoryService.getPublications();
 
+            // Mapeamos PENDING_PUBLISH a DRAFT para simplificar los estados
+            const mappedItems = data.map((item: any) => ({
+              ...item,
+              status: item.status === "PENDING_PUBLISH" ? "DRAFT" : item.status
+            }));
+
             set({
-              items: data,
+              items: mappedItems,
               isLoadingItems: false,
             });
           } catch (
@@ -329,10 +333,22 @@ export const useInventoryStore =
           // PASO 1: Iniciar (Subir foto e intent)
           const initData: any = await inventoryService.initPublication(file, intent);
           
+          const publicationId = initData.publicationId;
+          // Las preguntas vienen en la raíz del objeto, no en analysis
+          const initialQuestions = initData.questions || initData.analysis?.questions || [];
+
+          // PASO 2 AUTOMÁTICO: Enviar las preguntas sugeridas inmediatamente para obtener la descripción final
+          const answers = initialQuestions.reduce((acc: any, q: string) => {
+            acc[q] = "";
+            return acc;
+          }, {});
+
+          const answerData: any = await inventoryService.answerPublication(publicationId, answers);
+          
           set({
-            publicationId: initData.publicationId,
-            questions: initData.analysis?.questions || [],
-            draftData: initData.analysis || null,
+            publicationId,
+            questions: [], 
+            draftData: answerData.finalData || answerData.recommendation || answerData.draftData || initData.draftData || initData.analysis || null,
             isAnalyzing: false,
           });
         } catch (error: any) {
@@ -358,8 +374,8 @@ export const useInventoryStore =
           const data: any = await inventoryService.answerPublication(publicationId, answers);
 
           set({
-            questions: [], 
-            draftData: data.recommendation || null,
+            questions: [],
+            draftData: data.finalData || data.recommendation || data.draftData || null,
             isAnalyzing: false,
           });
         } catch (error: any) {
